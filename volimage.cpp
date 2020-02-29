@@ -170,7 +170,9 @@ void MKHSIN035::VolImage::extract(int sliceId, std::string output_prefix){
 }
 
 int MKHSIN035::VolImage::volImageSize(void){
-    
+    int bytes = slices.size() * (height * width * sizeof(char) + height * sizeof(char*))
+    +slices.size() * sizeof(char*);
+    return bytes;
 }
 
 
