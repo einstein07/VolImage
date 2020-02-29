@@ -94,6 +94,52 @@ void MKHSIN035::VolImage::diffmap(int sliceI, int sliceJ, std::string output_pre
 
 void MKHSIN035::VolImage::extract(int sliceId, std::string output_prefix){
     
+
+    /*
+     * The following block of code writes to the width, height and number of 
+     * slices, which is 1 in this case, in that order to the header file.
+     */
+    string header = output_prefix+".data"; 
+    ofstream outheader(header.c_str());
+
+    string line; //line to write
+    if(!outheader){
+        cout<<"Could not open "<<header<<endl;
+    }
+    else{
+        string w, h;
+        stringstream ssw;
+        cout<<"size of slices: "<<slices.size()<<endl;
+        ssw<<VolImage::width;
+        w = ssw.str();
+        stringstream ssh;
+        ssh<<VolImage::height;
+        h = ssh.str();
+        line = w +" "+ h +" 1";
+        outheader<<line;
+        outheader.close();
+    }
+    string outputfile = output_prefix+".raw";
+    ofstream output(outputfile.c_str());
+    if(!output){
+        cout<<"Could not open "<<outputfile<<endl;
+    }
+    else{
+        line = "";
+            for(int j = 0; j < VolImage::height; j++ ){
+                for(int k = 0; k < VolImage::width; k++){
+                    stringstream ss;
+                    ss<<slices[sliceId][j][k];
+                    line = line+ss.str()+" ";  
+                }
+                
+                output<<line<<endl;
+            }
+        output.close();
+        cout<<"File"<<outputfile<< " written"<<endl;
+    }
+    
+    
 }
 
 int MKHSIN035::VolImage::volImageSize(void){
