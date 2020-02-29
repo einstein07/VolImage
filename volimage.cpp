@@ -34,17 +34,18 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
     }
     else{
         std::cout<<"File opened"<<endl;
+        int numimages;
+
         while(getline(in, line)){
             istringstream iss(line);
             vector<string> results(istream_iterator<string>{iss}, 
                     istream_iterator<string>());
-            int numimages;
             
             istringstream(results[0])>>VolImage::width;
             istringstream(results[1])>>VolImage::height;
             istringstream(results[2])>>numimages;
             cout<<"Number of files: "<<numimages<<" Number of rows: "<<VolImage::height<<" Number of columns: "<<VolImage::width<<endl;
-            
+        }
             for (int i = 0; i < numimages; i++){
                 arr = new unsigned char*[VolImage::height];
                     
@@ -55,30 +56,44 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
                 stringstream ss;
                 ss<<i;
                 num = ss.str();
-                std::string slicefile = filename+""+num+".raw";
+                std::string slicefile = filename+num+".raw";
                 ifstream slicein(slicefile.c_str(), ios::binary);
                 if (!slicein){
                     cout<<"Could not open "<<slicefile<<endl;
                 }
                 else{
-                    int row = 0;
-                    while(getline(in, line)){
-                        
-                        istringstream isss(line);
-                        vector<unsigned char> sliceresults(istream_iterator<unsigned char>{isss},
-                                 istream_iterator<unsigned char>());
-                        for(int k = 0; k < VolImage::width; k++){
-                            arr[row][k] = sliceresults[k];
+
+                    int row = 0, col = 0;
+                    
+                    unsigned char value;
+                    char buf[sizeof(unsigned char)];
+                    while(slicein.read(buf,sizeof(buf))){
+                        memcpy(&value, buf, sizeof(value));
+                        arr[row][col] = value;
+
+                        if(col == (width-1)){
+                            //cout<<+value<<endl;
+                            //cout<<"row "<<row<<endl;
+                            col = 0;
+                            row++;
                         }
-                        row++;
+                        else{
+                            //cout<<+value<<" ";
+                            col++;    
+
+                        }
+
                     }
-            
+                    cout<<"closing slice_in for slice "<<i<<endl;
+                    slicein.close();
+                    slices.push_back(arr);
+                    cout<<"Read rows "<<row<<endl;
+                    
                 }
-                slices.push_back(arr);
                 
             }
             
-        }
+        
         cout<<"Read "<<slices.size()<<" slices"<<endl;
         
     }
@@ -89,6 +104,22 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
 }
 
 void MKHSIN035::VolImage::diffmap(int sliceI, int sliceJ, std::string output_prefix){
+    unsigned char** arr = new unsigned char*[VolImage::height];
+    int sliceId = slices.size();
+    for(int i = 0; i < height; i++){
+        
+        arr[i] = new unsigned char[width];
+        
+        for(int j = 0; j < width; j++){
+            arr[i][j] = (unsigned char)(abs((float)slices[sliceI][i][j] - (float)slices[sliceJ][i][j])/2);
+            
+        }
+          
+    }
+    slices.push_back(arr);
+    string filename = output_prefix;
+    extract(sliceId, filename);
+    slices.erase(slices.begin()+sliceId); //remove the last element which represents the difference between two slices.
     
 }
 
@@ -120,21 +151,17 @@ void MKHSIN035::VolImage::extract(int sliceId, std::string output_prefix){
         outheader.close();
     }
     string outputfile = output_prefix+".raw";
-    ofstream output(outputfile.c_str());
+    ofstream output(outputfile.c_str(), ios::binary);
     if(!output){
         cout<<"Could not open "<<outputfile<<endl;
     }
     else{
-        line = "";
-            for(int j = 0; j < VolImage::height; j++ ){
-                for(int k = 0; k < VolImage::width; k++){
-                    stringstream ss;
-                    ss<<slices[sliceId][j][k];
-                    line = line+ss.str()+" ";  
-                }
-                
-                output<<line<<endl;
+        for(int j = 0; j < VolImage::height; j++ ){
+            for(int k = 0; k < VolImage::width; k++){
+                output.write(reinterpret_cast<char*>(&slices[sliceId][j][k]), sizeof(slices[sliceId][j][k]));
             }
+
+        }
         output.close();
         cout<<"File"<<outputfile<< " written"<<endl;
     }
