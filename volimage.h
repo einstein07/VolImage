@@ -38,6 +38,9 @@ namespace MKHSIN035{
         //number of bytes used to store image data bytes
         //and pointers 
         int volImageSize(void);
+        //returns total number of images
+        int getnumOfImages(void);
+        
     };
 }
 
