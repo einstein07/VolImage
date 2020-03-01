@@ -1,12 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 /* 
  * File:   volimage.h
- * Author: root07
+ * Author: Sindiso Mkhatshwa
  *
  * Created on 27 February 2020, 18:35
  */
@@ -35,9 +31,14 @@ namespace MKHSIN035{
         //extract sliceId and write to output
         void extract(int sliceId, std::string output_prefix);
         
+        //extracts an image along row i of the volume, accross all slices
+        //and writes this out to an output file
+        void extractRow(int i);
+        
         //number of bytes used to store image data bytes
         //and pointers 
         int volImageSize(void);
+        
         //returns total number of images
         int getnumOfImages(void);
         
