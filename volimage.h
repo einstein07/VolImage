@@ -33,7 +33,7 @@ namespace MKHSIN035{
         
         //extracts an image along row i of the volume, accross all slices
         //and writes this out to an output file
-        void extractRow(int i);
+        void extractRow(int i, std::string output_prefix);
         
         //number of bytes used to store image data bytes
         //and pointers 
