@@ -31,9 +31,9 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
     
     if(!in){
         std::cout<<"Could not open "<<headerfile<<endl;
+        return false;
     }
     else{
-        std::cout<<"File opened"<<endl;
         int numimages;
 
         while(getline(in, line)){
@@ -44,7 +44,6 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
             istringstream(results[0])>>VolImage::width;
             istringstream(results[1])>>VolImage::height;
             istringstream(results[2])>>numimages;
-            cout<<"Number of files: "<<numimages<<" Number of rows: "<<VolImage::height<<" Number of columns: "<<VolImage::width<<endl;
         }
             for (int i = 0; i < numimages; i++){
                 arr = new unsigned char*[VolImage::height];
@@ -60,6 +59,7 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
                 ifstream slicein(slicefile.c_str(), ios::binary);
                 if (!slicein){
                     cout<<"Could not open "<<slicefile<<endl;
+                    return false;
                 }
                 else{
 
@@ -72,30 +72,24 @@ bool MKHSIN035::VolImage::readImages(std::string baseName){
                         arr[row][col] = value;
 
                         if(col == (width-1)){
-                            //cout<<+value<<endl;
-                            //cout<<"row "<<row<<endl;
                             col = 0;
                             row++;
                         }
                         else{
-                            //cout<<+value<<" ";
                             col++;    
 
                         }
 
                     }
-                    cout<<"closing slice_in for slice "<<i<<endl;
                     slicein.close();
                     slices.push_back(arr);
-                    cout<<"Read rows "<<row<<endl;
                     
                 }
                 
             }
             
         
-        cout<<"Read "<<slices.size()<<" slices"<<endl;
-        
+        return true;
     }
     
     
@@ -140,7 +134,6 @@ void MKHSIN035::VolImage::extract(int sliceId, std::string output_prefix){
     else{
         string w, h;
         stringstream ssw;
-        cout<<"size of slices: "<<slices.size()<<endl;
         ssw<<VolImage::width;
         w = ssw.str();
         stringstream ssh;
@@ -163,16 +156,62 @@ void MKHSIN035::VolImage::extract(int sliceId, std::string output_prefix){
 
         }
         output.close();
-        cout<<"File"<<outputfile<< " written"<<endl;
     }
     
     
 }
 
+void MKHSIN035::VolImage::extractRow(int i, string output_prefix){
+    
+    string outputfile = output_prefix+".raw";
+    ofstream output(outputfile.c_str(), ios::binary);
+    if(!output){
+        cout<<"Could not open "<<outputfile<<endl;
+    }
+    else{
+        for(int j = 0; j < slices.size(); j++){
+                for(int l = 0; l < width; l++){
+                    output.write(reinterpret_cast<char*>(&slices[j][i][l]), sizeof(slices[j][i][l]));
+                }
+            
+        }
+    }
+    output.close();
+     /*
+     * The following block of code writes to the width, height and number of 
+     * slices, which is 1 in this case, in that order to the header file.
+     */
+    string header = output_prefix+".data"; 
+    ofstream outheader(header.c_str());
+
+    string line; //line to write
+    if(!outheader){
+        cout<<"Could not open "<<header<<endl;
+    }
+    else{
+        string w, h;
+        stringstream ssw;
+        ssw<<VolImage::width;
+        w = ssw.str();
+        stringstream ssh;
+        ssh<<VolImage::height;
+        h = ssh.str();
+        line = w +" "+ slices.size() +" 1";
+        outheader<<line;
+        outheader.close();
+    }
+ }
+    
+
+
 int MKHSIN035::VolImage::volImageSize(void){
     int bytes = slices.size() * (height * width * sizeof(char) + height * sizeof(char*))
     +slices.size() * sizeof(char*);
     return bytes;
+}
+
+int MKHSIN035::VolImage::getnumOfImages(){
+    return slices.size(); //the number of images corresponds to the number of slices
 }
 
 
