@@ -50,6 +50,15 @@ int main(int argc, char** argv) {
                 cout<<"Number of bytes required: "<<obj.volImageSize()<<endl;
                 cout<<"Slice extracted and written to file: "<<outputfilename<<".raw"<<endl;
             }
+            else if(op == "-g"){
+                int i;
+                istringstream(string(argv[3])) >> i;
+                string outputfile = string(argv[4]);
+                obj.extractRow(i, outputfile);
+                cout<<"Number of images: "<<obj.getnumOfImages()<<endl;
+                cout<<"Number of bytes required: "<<obj.volImageSize()<<endl;
+                cout<<"Image extracted along row "<< i <<endl; 
+            }
 
         }
         else{
